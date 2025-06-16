@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Jupyter and IPython
+.ipynb_checkpoints
+
+# Environment files
+.env
+
+# VS Code and other IDE files
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Streamlit secrets (if you use secrets.toml locally)
+.streamlit/secrets.toml
