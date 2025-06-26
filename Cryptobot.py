@@ -4,7 +4,10 @@ import requests
 from dotenv import load_dotenv, find_dotenv
 from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+try:
+    from langchain_openai import ChatOpenAI
+except ImportError:
+    from langchain.chat_models import ChatOpenAI
 import datetime
 import streamlit.components.v1 as components
 import time
