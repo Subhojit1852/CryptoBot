@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import requests
 from dotenv import load_dotenv, find_dotenv
-from langchain.chains import LLMChain
+from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 import datetime
@@ -10,10 +10,10 @@ import streamlit.components.v1 as components
 import time
 
 # Load environment
-load_dotenv(find_dotenv())
+load_dotenv()
 
 # Configure OpenRouter
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "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"
 os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
 
 # --- Load the LLM (Mistral-7B) ---
@@ -21,8 +21,12 @@ def load_llm():
     return ChatOpenAI(
         model="mistralai/mistral-7b-instruct",
         temperature=0.3,
-        max_tokens=512
+        max_tokens=512,
+        openai_api_key="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",  # Directly pass API key
+        openai_api_base="https://openrouter.ai/api/v1",
+        # headers={"HTTP-Referer": "https://your-site.com"},  # Required by OpenRouter
     )
+
 
 # --- Fetch crypto data ---
 def get_crypto_context():
