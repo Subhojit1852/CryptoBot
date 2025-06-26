@@ -4,31 +4,27 @@ import requests
 from dotenv import load_dotenv, find_dotenv
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from langchain_huggingface import HuggingFaceEndpoint
+from langchain_openai import ChatOpenAI
 import datetime
 import streamlit.components.v1 as components
 import time
 
 # Load environment
 load_dotenv(find_dotenv())
-HF_TOKEN = "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"
-HUGGINGFACE_REPO_ID = "HuggingFaceH4/zephyr-7b-beta"
 
-# Disable file watcher bug in Streamlit
-import streamlit.watcher.local_sources_watcher
-streamlit.watcher.local_sources_watcher.get_module_paths = lambda module: []
+# Configure OpenRouter
+os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
 
-# --- Load the LLM ---
+# --- Load the LLM (Mistral-7B) ---
 def load_llm():
-    return HuggingFaceEndpoint(
-        repo_id=HUGGINGFACE_REPO_ID,
+    return ChatOpenAI(
+        model="mistralai/mistral-7b-instruct",
         temperature=0.3,
-        huggingfacehub_api_token=HF_TOKEN,
-        max_new_tokens=512,
-        stop=["Context:", "Question:", "Answer:"]
+        max_tokens=512
     )
 
-# --- Fetch real-time crypto context ---
+# --- Fetch crypto data ---
 def get_crypto_context():
     try:
         url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
@@ -43,35 +39,17 @@ def get_30_day_price_table():
     params = {"vs_currency": "usd", "days": 30}
     response = requests.get(url, params=params).json()
 
-    prices = response["prices"]  # [ [timestamp, price], ... ]
-
+    prices = response["prices"]
     table = "| Date | Price (USD) |\n|------|--------------|\n"
     for timestamp, price in prices[-30:]:
         date = datetime.datetime.fromtimestamp(timestamp / 1000).strftime("%Y-%m-%d")
         table += f"| {date} | ${price:,.2f} |\n"
-
     return table
 
-# --- Create a prompt template ---
+# --- Prompt Template ---
 crypto_prompt = PromptTemplate(
     template="""
-You are an intelligent and creative crypto assistant. Use the current market context to answer the user's question carefully and accurately.ONLY answer the following question using the provided market context. Do NOT answer anything else or generate another question.
-
-Your capabilities include:
-1. If the question is about price predictions or future trends, offer a **balanced analysis** — never make guarantees, but share what might affect price direction.
-2. For investment-related queries, explain risks and common strategies without direct advice.
-3. For general knowledge, explain clearly and factually.
-4. Always stick to the provided context for current data (like price).
-5. You may reference **external macro trends** like regulations, ETFs, or halving cycles in your analysis.
-6. Be creative when asked for humor.
-7. Perform basic math for conversions and estimates.
-
-- Answer ONLY the user's question.
-- Do NOT invent or answer new questions.
-- Do NOT output anything beyond what was asked.
-- Use the context to reason, include math if needed.
-- Be creative when asked for humor or analogies.
-If you don't know something, be honest and say so.
+You are an intelligent crypto assistant. Use the context to answer the question.
 
 Context:
 {context}
@@ -87,67 +65,33 @@ Answer:
 # --- Streamlit App ---
 def main():
     st.set_page_config(page_title="CryptoBot 💰", page_icon="🚀", layout="centered")
-    st.title(" CryptoBot — Ask Anything About Bitcoin")
-    st.markdown("""
-<style>
-html, body {
-    background-color: #0f1117;
-    overflow-x: hidden;
-    font-family: 'Courier New', monospace;
-}
-
-.background-floaters {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.floater {
-    position: absolute;
-    font-size: 34px;
-    animation: float 20s linear infinite;
-    opacity: 0.4; /* brighter visibility */
-    filter: brightness(1.2); /* slight glow effect */
-}
-
-@keyframes float {
-    0%   { transform: translateY(100vh) rotate(0deg); }
-    100% { transform: translateY(-100vh) rotate(360deg); }
-}
-
-/* Make Streamlit's content show above background */
-.block-container {
-    position: relative;
-    z-index: 1;
-}
-</style>
-
-<div class="background-floaters">
-    <div class="floater" style="left: 5%; animation-delay: 0s;">💵</div>
-    <div class="floater" style="left: 15%; animation-delay: 3s;">₿</div>
-    <div class="floater" style="left: 25%; animation-delay: 5s;">💰</div>
-    <div class="floater" style="left: 35%; animation-delay: 7s;">📉</div>
-    <div class="floater" style="left: 45%; animation-delay: 9s;">📈</div>
-    <div class="floater" style="left: 55%; animation-delay: 11s;">💸</div>
-    <div class="floater" style="left: 65%; animation-delay: 13s;">🪙</div>
-    <div class="floater" style="left: 75%; animation-delay: 15s;">💹</div>
-    <div class="floater" style="left: 85%; animation-delay: 17s;">🤑</div>
-    <div class="floater" style="left: 95%; animation-delay: 19s;">🏦</div>
-</div>
-""", unsafe_allow_html=True)
-
-
+    st.title("CryptoBot — Ask Anything About Bitcoin")
+    
+    # Background animation
+    components.html("""
+    <style>
+    .floater {
+        position: fixed;
+        font-size: 34px;
+        animation: float 20s linear infinite;
+        opacity: 0.4;
+        filter: brightness(1.2);
+    }
+    @keyframes float {
+        0% { transform: translateY(100vh) rotate(0deg); }
+        100% { transform: translateY(-100vh) rotate(360deg); }
+    }
+    </style>
+    <div class="floater" style="left:5%">💵</div>
+    <div class="floater" style="left:15%">₿</div>
+    <div class="floater" style="left:25%">💰</div>
+    """)
 
     sample_prompts = [
         "What is the current price of Bitcoin?",
         "Should I buy Bitcoin now or wait?",
-        "Tell me a joke about Bitcoin’s price?",
-        "How much Bitcoin can I get for $1000?",
-        "Give me the 30-day price trend of BTC."
+        "Tell me a joke about Bitcoin's price?",
+        "How much Bitcoin can I get for $1000?"
     ]
 
     st.markdown("### Try a sample question:")
@@ -170,7 +114,7 @@ html, body {
         st.chat_message("user").markdown(user_prompt)
         st.session_state["messages"].append({"role": "user", "content": user_prompt})
 
-        with st.spinner("Thinking like Satoshi... 💭"):
+        with st.spinner("Analyzing the blockchain..."):
             try:
                 context = get_30_day_price_table()
                 llm_chain = LLMChain(llm=load_llm(), prompt=crypto_prompt)
@@ -181,9 +125,8 @@ html, body {
                 result = response["text"]
                 st.chat_message("assistant").markdown(result)
                 st.session_state["messages"].append({"role": "assistant", "content": result})
-
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     main()
