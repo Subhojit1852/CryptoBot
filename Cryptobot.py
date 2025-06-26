@@ -13,7 +13,7 @@ import time
 load_dotenv()
 
 # Configure OpenRouter
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENROUTER_API_KEY"]
 os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
 
 # --- Load the LLM (Mistral-7B) ---
@@ -22,7 +22,7 @@ def load_llm():
         model="mistralai/mistral-7b-instruct",
         temperature=0.3,
         max_tokens=512,
-        openai_api_key="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",  # Directly pass API key
+        openai_api_key=st.secrets["OPENROUTER_API_KEY"],  # Directly pass API key
         openai_api_base="https://openrouter.ai/api/v1",
         # headers={"HTTP-Referer": "https://your-site.com"},  # Required by OpenRouter
     )
