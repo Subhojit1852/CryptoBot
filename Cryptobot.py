@@ -2,8 +2,8 @@ import os
 import streamlit as st
 import requests
 from dotenv import load_dotenv, find_dotenv
-from langchain.chains.llm import LLMChain
-from langchain.prompts import PromptTemplate
+# from langchain.chains.llm import LLMChain
+from langchain_core.prompts import PromptTemplate
 try:
     from langchain_openai import ChatOpenAI
 except ImportError:
@@ -124,12 +124,16 @@ def main():
         with st.spinner("Analyzing the blockchain..."):
             try:
                 context = get_30_day_price_table()
-                llm_chain = LLMChain(llm=load_llm(), prompt=crypto_prompt)
-                response = llm_chain.invoke({
+                chain = crypto_prompt | load_llm()
+
+                response = chain.invoke({
                     "context": context,
                     "question": user_prompt
                 })
-                result = response["text"]
+
+                result = response.content.strip()
+
+
                 st.chat_message("assistant").markdown(result)
                 st.session_state["messages"].append({"role": "assistant", "content": result})
             except Exception as e:
